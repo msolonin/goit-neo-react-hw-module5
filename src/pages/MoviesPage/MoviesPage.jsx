@@ -1,7 +1,8 @@
 import { Field, Form, Formik } from 'formik';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { searchMovie } from "../../service/moviesApi.js";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import MovieList from "../../components/MovieList/MovieList.jsx";
 
 const MoviesPage = () => {
   const [movies, setMovies] = useState([]);
@@ -12,40 +13,35 @@ const MoviesPage = () => {
 
   const queryValue = searchParams.get('query') ?? '';
 
-  const handleSubmit = async (values, actions) => {
+  useEffect(() => {
+    const fetchMovies = async () => {
+      if (!queryValue) return;
+      try {
+        setIsLoading(true);
+        setError(false);
+        const result = await searchMovie(queryValue);
+        setMovies(result.results);
+      } catch (error) {
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, [queryValue]);
+
+  const handleSubmit = (values, actions) => {
     const { query } = values;
 
     if (query.trim() === '') {
       setSearchParams({});
+      setMovies([]);
     } else {
       setSearchParams({ query });
     }
 
-    try {
-      setIsLoading(true);
-      setError(false);
-
-      // Call the searchMovie API with the query from the form submission
-      const result = await searchMovie(query);
-      setMovies(result.results);
-
-    } catch (error) {
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-
     actions.setSubmitting(false);
-  };
-
-
-  const handleChange = ({ target: { value } }) => {
-    if (!value) {
-      searchParams.delete('query');
-    } else {
-      searchParams.set('query', value);
-    }
-    setSearchParams(searchParams);
   };
 
   return (
@@ -55,7 +51,7 @@ const MoviesPage = () => {
         enableReinitialize
         onSubmit={handleSubmit}
       >
-        {({ values }) => (
+        {({ values, handleChange }) => (
           <Form>
             <Field
               name="query"
@@ -72,15 +68,7 @@ const MoviesPage = () => {
         {isLoading && <h1>Loading...</h1>}
         {error && <h1>Oops, something went wrong...</h1>}
         {movies.length > 0 && (
-          <ul>
-            {movies.map((el) => (
-              <li key={el.id}>
-                <Link to={`/movies/${el.id}`} state={{ from: location }}>
-                  {el.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <MovieList movies={movies} location={location} />
         )}
       </div>
     </>

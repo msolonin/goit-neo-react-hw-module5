@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {getTrendingMovies} from "../../service/moviesApi.js";
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import {useLocation, useSearchParams } from 'react-router-dom'
+import MovieList from "../../components/MovieList/MovieList.jsx";
 
 
 const HomePage = () => {
@@ -35,15 +36,7 @@ const HomePage = () => {
 			{movies && (
 				<>
 					<h1>Trending today</h1>
-					<ul>
-						{movies.map((el) => (
-							<li key={el.id}>
-								<Link to={`/movies/${el.id}`} state={location}>
-									{el.title}
-								</Link>
-							</li>
-						))}
-					</ul>
+					<MovieList movies={movies} location={location} />
 				</>
 			)}
 		</div>
